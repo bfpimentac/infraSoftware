@@ -30,8 +30,8 @@ class Barbearia {
         @Override
         public void run() {
             while (true) {
+                barbeiroEstaDormindo = true;
                 System.out.println("Barbeiro esperando clientes para atender (e dormindo por enquanto)");
-
 
                 try {
                     filaClientes.acquire(); // Checa a fila. O barbeiro dorme se não há clientes na fila
