@@ -83,16 +83,6 @@ class Barbearia {
                 mutex.acquire();
 
                 if (clientesEsperando < MAX_CADEIRAS){
-//                    if (Barbearia.barbeiroEstaDormindo == true){ // Significa que o barbeiro não está atendendo ninguém
-//                        // Acorda o barbeiro e é atendido
-//                    } else if (Barbearia.clientesEsperando == 0 && Barbearia.barbeiroEstaAtendendo == false){
-//                        // É atendido
-//                    } else { // Nos casos em que o barbeiro já está atendendo, entra na fila
-//                        Barbearia.clientesEsperando++; // Incrementa o número de clientes esperando
-////                        Barbearia.barbeiro.release();
-////                        Barbearia.mutex.release();
-////                        Barbearia.filaClientes.acquire();
-//                    }
 
                     clientesEsperando++;
 
