@@ -5,68 +5,60 @@ import java.util.concurrent.Semaphore;
 
 public class BanheiroUnissex {
 
-    // Definindo a capacidade máxima do banheiro
     private static final int MAX_CAPACITY = 3;
-    // Variáveis para gerenciar a capacidade atual e o gênero atual no banheiro
     private int currentCapacity = 0;
-    private char currentGender = 'N'; // 'N' para nenhum, 'M' para masculino e 'F' para feminino
+    private char currentGender = 'N';
 
-    // Semáforo para controlar a quantidade de pessoas no banheiro
     private final Semaphore semaphore = new Semaphore(MAX_CAPACITY);
-    // Objeto de bloqueio para a catraca
     private final Object catracaLock = new Object();
-    // Fila para gerenciar a ordem das pessoas esperando para entrar no banheiro
     private final Queue<Pessoa> fila = new LinkedList<>();
-    // Instância da classe Random para geração de números aleatórios
     private final Random random = new Random();
 
-    // Método para uma pessoa entrar no banheiro
     public void entrarBanheiro(char gender, int id) throws InterruptedException {
         synchronized (catracaLock) {
-            // Cria uma nova pessoa com o gênero e ID fornecidos
             Pessoa pessoa = new Pessoa(gender, id);
-            // Adiciona a pessoa na fila
             fila.add(pessoa);
             System.out.println((gender == 'M' ? "Homem " : "Mulher ") + id + " está esperando para entrar no banheiro.");
 
-            // Espera até que a pessoa na frente da fila seja ela e que o banheiro esteja disponível para seu gênero
             while (fila.peek() != pessoa || (currentCapacity > 0 && currentGender != gender) || currentCapacity >= MAX_CAPACITY) {
-                catracaLock.wait(); // Espera até que a catraca permita a entrada
+                catracaLock.wait();
             }
 
-            // Remove a pessoa da fila quando ela entra
             fila.poll();
-            semaphore.acquire(); // Adquire o semáforo para entrar no banheiro
-            currentCapacity++; // Aumenta a capacidade atual do banheiro
-            currentGender = gender; // Define o gênero atual no banheiro
+            semaphore.acquire();
+            currentCapacity++;
+            currentGender = gender;
 
             System.out.println((gender == 'M' ? "Homem " : "Mulher ") + id + " entrou no banheiro.");
+            if (currentCapacity == MAX_CAPACITY) {
+                System.out.println("O banheiro está cheio.");
+            }
+            if (!fila.isEmpty()) {
+                Pessoa proximo = fila.peek();
+                System.out.println("Próximo na fila: " + (proximo.getGender() == 'M' ? "Homem " : "Mulher ") + proximo.getId());
+            }
         }
     }
 
-    // Método para uma pessoa sair do banheiro
     public void sairBanheiro(char gender, int id, long tempoNoBanheiro) {
         synchronized (catracaLock) {
-            currentCapacity--; // Diminui a capacidade atual do banheiro
+            currentCapacity--;
 
-            // Reseta o gênero atual quando o banheiro fica vazio
             if (currentCapacity == 0) {
-                currentGender = 'N'; // Nenhum gênero está no banheiro
+                currentGender = 'N';
             }
 
-            semaphore.release(); // Libera o semáforo para permitir que outras pessoas entrem
-            catracaLock.notifyAll(); // Notifica todos que estão esperando para entrar
+            semaphore.release();
+            catracaLock.notifyAll();
 
             System.out.println((gender == 'M' ? "Homem " : "Mulher ") + id + " saiu do banheiro após " + tempoNoBanheiro + "ms.");
         }
     }
 
-    // Classe interna estática representando uma pessoa
     private static class Pessoa {
-        private final char gender; // Gênero da pessoa ('M' ou 'F')
-        private final int id; // Identificador único da pessoa
+        private final char gender;
+        private final int id;
 
-        // Construtor da classe Pessoa
         public Pessoa(char gender, int id) {
             this.gender = gender;
             this.id = id;
@@ -82,17 +74,13 @@ public class BanheiroUnissex {
     }
 
     public static void main(String[] args) {
-        // Cria uma instância da classe BanheiroUnissex
         BanheiroUnissex banheiro = new BanheiroUnissex();
-        // Instância da classe Random para embaralhamento das threads
         Random random = new Random();
 
-        // Classe interna implementando Runnable para gerenciar a execução das threads
         class PessoaRunnable implements Runnable {
-            private final char gender; // Gênero da pessoa ('M' ou 'F')
-            private final int id; // Identificador único da pessoa
+            private final char gender;
+            private final int id;
 
-            // Construtor da classe PessoaRunnable
             public PessoaRunnable(char gender, int id) {
                 this.gender = gender;
                 this.id = id;
@@ -101,13 +89,10 @@ public class BanheiroUnissex {
             @Override
             public void run() {
                 try {
-                    // Chama o método para entrar no banheiro
                     banheiro.entrarBanheiro(gender, id);
                     long tempoInicio = System.currentTimeMillis();
-                    // Simula o tempo que a pessoa fica no banheiro
                     Thread.sleep((long) (Math.random() * 1000));
                     long tempoFim = System.currentTimeMillis();
-                    // Chama o método para sair do banheiro
                     banheiro.sairBanheiro(gender, id, tempoFim - tempoInicio);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -115,14 +100,12 @@ public class BanheiroUnissex {
             }
         }
 
-        // Cria e inicia as threads para 50 mulheres e 50 homens
         Thread[] threads = new Thread[100];
         for (int i = 0; i < 50; i++) {
-            threads[i] = new Thread(new PessoaRunnable('F', i)); // Thread para uma mulher
-            threads[50 + i] = new Thread(new PessoaRunnable('M', i)); // Thread para um homem
+            threads[i] = new Thread(new PessoaRunnable('F', i));
+            threads[50 + i] = new Thread(new PessoaRunnable('M', i));
         }
 
-        // Embaralha as threads para a execução aleatória
         for (int i = 0; i < threads.length; i++) {
             int randomIndex = random.nextInt(threads.length);
             Thread temp = threads[i];
@@ -130,12 +113,10 @@ public class BanheiroUnissex {
             threads[randomIndex] = temp;
         }
 
-        // Inicia todas as threads
         for (Thread thread : threads) {
             thread.start();
         }
 
-        // Aguarda a conclusão de todas as threads
         for (Thread thread : threads) {
             try {
                 thread.join();
