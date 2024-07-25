@@ -16,7 +16,6 @@ public class BanheiroUnissex {
 
     // Semáforo para controlar a capacidade do banheiro
     private final Semaphore semaphore = new Semaphore(MAX_CAPACITY);
-    // ReentrantLock e Condition para substituir synchronized, wait() e notify()
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     // Fila para gerenciar a ordem das pessoas esperando para entrar no banheiro
