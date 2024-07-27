@@ -24,9 +24,6 @@ class Onibus extends Thread {
     public void ocuparAssento(int numPassageiro) {
         locker.lock(); // Adquire o lock para acesso seguro às variáveis compartilhadas
         try {
-            while (!naoEstaEmbarcando || assentosLivres <= 0) { // Se o ônibus não está embarcando ou não há assentos livres
-                podeEmbarcar.await(); // Aguarda a condição para poder embarcar
-            }
             assentosLivres--; // Ocupa um assento
             pontoOnibus.passageiroEmbarcou();
             System.out.println("O passageiro " + numPassageiro + " ocupou um assento com sucesso! Assentos livres restantes: " + assentosLivres);
@@ -35,9 +32,13 @@ class Onibus extends Thread {
                 System.out.println("O ônibus está cheio!");
                 naoEstaEmbarcando = false; // O ônibus para de embarcar passageiros
             }
-        } catch (InterruptedException e) {
-            System.out.println("Erro: " + e.getMessage());
-            Thread.currentThread().interrupt(); // Restaura o status de interrupção
+
+            // O ônibus embarca se não houverem outros passageiros na parada - ele não espera ficar cheio
+            if (pontoOnibus.getPassageirosEsperando() == 0) {
+                System.out.println("Ônibus embarcando");
+                naoEstaEmbarcando = false;
+            }
+
         } finally {
             locker.unlock(); // Libera o lock
         }
@@ -48,6 +49,16 @@ class Onibus extends Thread {
         locker.lock();
         try {
             return disponivel;
+        } finally {
+            locker.unlock();
+        }
+    }
+
+    // Método para verificar se o ônibus não está embarcando
+    public boolean getEmbarque() {
+        locker.lock();
+        try {
+            return naoEstaEmbarcando;
         } finally {
             locker.unlock();
         }
@@ -121,7 +132,7 @@ class Passageiro extends Thread {
             while (!embarcou) { // Enquanto o passageiro não embarcar
                 locker.lock(); // Adquire o lock para sincronização
                 try {
-                    if (onibus.getDisponibilidade()) { // Se o ônibus está disponível
+                    if (onibus.getDisponibilidade() && onibus.getEmbarque()) { // Se o ônibus está disponível e não está embarcando
                         onibus.ocuparAssento(id); // O passageiro tenta ocupar um assento
                         embarcou = true; // Marca que o passageiro embarcou
                     }
