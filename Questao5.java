@@ -28,6 +28,7 @@ class Onibus extends Thread {
                 podeEmbarcar.await(); // Aguarda a condição para poder embarcar
             }
             assentosLivres--; // Ocupa um assento
+            pontoOnibus.passageiroEmbarcou();
             System.out.println("O passageiro " + numPassageiro + " ocupou um assento com sucesso! Assentos livres restantes: " + assentosLivres);
 
             if (assentosLivres == 0) { // Se todos os assentos estão ocupados
@@ -158,6 +159,16 @@ class PontoOnibus {
         locker.lock(); // Adquire o lock para sincronização
         try {
             return passageirosEsperando; // Retorna o número de passageiros esperando
+        } finally {
+            locker.unlock(); // Libera o lock
+        }
+    }
+
+    // Método para decrementar o número de passageiros esperando na parada após o embarque
+    public void passageiroEmbarcou() {
+        locker.lock();
+        try {
+            passageirosEsperando--; // Retorna o número de passageiros esperando
         } finally {
             locker.unlock(); // Libera o lock
         }
